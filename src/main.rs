@@ -1,21 +1,4 @@
-fn dump_message_block(message_block: Vec<Vec<char>>) {
-	for row in message_block {
-		for c in row {
-			print!("{}", c);
-		}
-		println!();
-	}
-}
-
-fn convert_input_to_binary(input: String) -> String {
-	let mut output = "".to_string();
-	for c in input.clone().into_bytes() {
-		let input = format!("0{:b}", c);
-		output += &format!("{:0>8}", input);
-	}
-	output + "1"
-}
-
+// initializing message_block
 fn step_one(input_bin: String) -> Vec<Vec<char>> {
 	let mut message_block = vec!['0'; 512];
 
@@ -40,6 +23,43 @@ fn shift(curr_row: Vec<char>, positions_to_shift: usize) -> Vec<char> {
 		output[i] = '0';
 	}
 	output
+}
+
+// populate message_block words - w16..w64
+fn step_two(message_block: &mut Vec<Vec<char>>) {
+	for i in 16..64 {
+		let result = calc_next_word(i, message_block.to_vec());
+		message_block.push(result);
+	}
+}
+
+fn calc_next_word(curr_row: usize, message_block: Vec<Vec<char>>) -> Vec<char> {
+	let x = message_block[curr_row - 16].clone();
+	let y = message_block[curr_row - 7].clone();
+	let sig_zero = sig_zero(message_block[curr_row - 15].clone());
+	let sig_one = sig_one(message_block[curr_row - 2].clone());
+
+	let x_str: String = x.into_iter().collect();
+	let y_str: String = y.into_iter().collect();
+	let sig_zero_str: String = sig_zero.into_iter().collect();
+	let sig_one_str: String = sig_one.into_iter().collect();
+
+	let x_int = i128::from_str_radix(&x_str, 2).unwrap();
+	let y_int = i128::from_str_radix(&y_str, 2).unwrap();
+	let sig_zero_int = i128::from_str_radix(&sig_zero_str, 2).unwrap();
+	let sig_one_int = i128::from_str_radix(&sig_one_str, 2).unwrap();
+
+	let result_dec = x_int + y_int + sig_zero_int + sig_one_int;
+	let mut result_bin_str = format!("{:b}", result_dec);
+
+	result_bin_str = format!("{:0>32}", result_bin_str);
+	let mut result_bin_vec: Vec<char> = result_bin_str.chars().collect();
+
+	while result_bin_vec.len() > 32 {
+		result_bin_vec.remove(0);
+	}
+
+	result_bin_vec
 }
 
 fn sig_zero(curr_row: Vec<char>) -> Vec<char> {
@@ -82,45 +102,70 @@ fn sig_one(curr_row: Vec<char>) -> Vec<char> {
 	result
 }
 
-fn calc_next_word(curr_row: usize, message_block: Vec<Vec<char>>) -> Vec<char> {
-	let x = message_block[curr_row - 16].clone();
-	let y = message_block[curr_row - 7].clone();
-	let sig_zero = sig_zero(message_block[curr_row - 15].clone());
-	let sig_one = sig_one(message_block[curr_row - 2].clone());
+// calculate hashes for h0-h7 and final hash_value
+fn step_three() {
+}
 
-	let x_str: String = x.into_iter().collect();
-	let y_str: String = y.into_iter().collect();
-	let sig_zero_str: String = sig_zero.into_iter().collect();
-	let sig_one_str: String = sig_one.into_iter().collect();
+fn sqrt_of_first_8_primes() {
+	let mut num_primes = 0;
+	let mut i = 2;
+	loop {
+		if is_prime(i) {
+			num_primes += 1;
+			let sqrt = (i as f64).sqrt();
+			let mut sqrt_string = sqrt.to_string();
+			sqrt_string.remove(0);
 
-	let x_int = i128::from_str_radix(&x_str, 2).unwrap();
-	let y_int = i128::from_str_radix(&y_str, 2).unwrap();
-	let sig_zero_int = i128::from_str_radix(&sig_zero_str, 2).unwrap();
-	let sig_one_int = i128::from_str_radix(&sig_one_str, 2).unwrap();
+			sqrt_string = sqrt_string.chars().collect();
+			let mut dec_part: f64 = sqrt_string.parse().unwrap();
 
-	let result_dec = x_int + y_int + sig_zero_int + sig_one_int;
-	let mut result_bin_str = format!("{:b}", result_dec);
-
-	result_bin_str = format!("{:0>32}", result_bin_str);
-	let mut result_bin_vec: Vec<char> = result_bin_str.chars().collect();
-
-	while result_bin_vec.len() > 32 {
-		result_bin_vec.remove(0);
+			let result_dec = ((dec_part * 4294967296.0 * 10000000000.0).round() / 10000000000.0) as i128;
+			let mut result_bin = format!("{:b}", result_dec);
+			result_bin = format!("{:0>32}", result_bin);
+			result_bin = result_bin.chars().take(32).collect();
+			println!("{}", result_bin);
+		}
+		if num_primes >= 8 {
+			break;
+		}
+		i += 1;
 	}
+}
 
-	result_bin_vec
+fn is_prime(num: i32) -> bool {
+	for i in 0..num {
+		if num as f32 % i as f32 == 0.0 && i != 1 && i != num {
+			return false;
+		}
+	}
+	return true;
 }
 
 fn main() {
 	let mut input = "abc123".to_string();
 	let input_bin = convert_input_to_binary(input.clone());
 	let mut message_block = step_one(input_bin);
-	let mut output = "".to_string();
+	step_two(&mut message_block);
 
-	for i in 16..64 {
-		let result = calc_next_word(i, message_block.clone());
-		message_block.push(result);
-	}
+	sqrt_of_first_8_primes();
 
 	//dump_message_block(message_block);
+}
+
+fn dump_message_block(message_block: Vec<Vec<char>>) {
+	for row in message_block {
+		for c in row {
+			print!("{}", c);
+		}
+		println!();
+	}
+}
+
+fn convert_input_to_binary(input: String) -> String {
+	let mut output = "".to_string();
+	for c in input.clone().into_bytes() {
+		let input = format!("0{:b}", c);
+		output += &format!("{:0>8}", input);
+	}
+	output + "1"
 }
