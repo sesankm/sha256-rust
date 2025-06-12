@@ -1,6 +1,8 @@
 mod k_constants;
 mod bin_util;
 
+///////////////////////////////////////////////////////////////
+// STEP 1
 fn init_message_block(input_bin: String) -> Vec<Vec<char>> {
 	let mut message_block = vec!['0'; 512];
 
@@ -27,6 +29,8 @@ fn shift(curr_row: Vec<char>, positions_to_shift: usize) -> Vec<char> {
 	output
 }
 
+///////////////////////////////////////////////////////////////
+// STEP 2
 fn fill_message_block(message_block: &mut Vec<Vec<char>>) {
 	for i in 16..64 {
 		let result = calc_next_word(i, message_block.to_vec());
@@ -63,7 +67,9 @@ fn calc_sig_one(curr_row: Vec<char>) -> Vec<char> {
 	bin_util::bin_xor(xor_res, v3)
 }
 
-fn calc_final_hash(message_block: Vec<Vec<char>>) {
+///////////////////////////////////////////////////////////////
+// STEP 3
+fn calc_final_hash(message_block: Vec<Vec<char>>) -> String {
 	let initial_hashes: Vec<Vec<char>> = calculate_initial_hashes();
 	let mut a = initial_hashes[0].clone();
 	let mut b = initial_hashes[1].clone();
@@ -117,7 +123,7 @@ fn calc_final_hash(message_block: Vec<Vec<char>>) {
 	let seg_7 = to_hex(result_word_seven.iter().collect::<String>(), 4);
 	let seg_8 = to_hex(result_word_eight.iter().collect::<String>(), 4);
 
-	print!("{}{}{}{}{}{}{}{}", seg_1, seg_2, seg_3, seg_4, seg_5, seg_6, seg_7, seg_8);
+	format!("{}{}{}{}{}{}{}{}", seg_1, seg_2, seg_3, seg_4, seg_5, seg_6, seg_7, seg_8)
 }
 
 fn to_hex(val: String, len: usize) -> String {
@@ -202,5 +208,6 @@ fn main() {
 	let mut message_block = init_message_block(input_bin);
 	fill_message_block(&mut message_block);
 	calculate_initial_hashes();
-	calc_final_hash(message_block);
+	let hash = calc_final_hash(message_block);
+	println!("{}", hash);
 }
