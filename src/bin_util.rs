@@ -54,3 +54,10 @@ pub fn bin_to_decimal(inp: &[char]) -> i128 {
 	}
 	isize::from_str_radix(&inp_as_str.trim(), 2).unwrap() as i128
 }
+
+
+// DEBUG
+#[allow(dead_code)]
+pub fn dump_vec(inp: &[char]) {
+	println!("{}", inp.into_iter().collect::<String>());
+}

@@ -13,20 +13,11 @@ fn init_message_block(input_bin: String) -> Vec<Vec<char>> {
 
 	let input_len_bin_len = input_len.len();
 	for (ind, val) in input_len.chars().enumerate() {
-		message_block[512 - input_len_bin_len - ind + 1] = val;
+		message_block[512 - (input_len_bin_len - ind)] = val;
 	}
 
 	let vec_of_slices: Vec<&[char]> = message_block.chunks(32).collect();
 	vec_of_slices.into_iter().map(|x| x.to_vec()).collect()
-}
-
-fn shift(curr_row: &[char], positions_to_shift: usize) -> Vec<char> {
-	let mut output = curr_row.to_vec();
-	output.rotate_right(positions_to_shift);
-	for i in 0..positions_to_shift {
-		output[i] = '0';
-	}
-	output
 }
 
 ///////////////////////////////////////////////////////////////
@@ -66,6 +57,16 @@ fn calc_sig_one(curr_row: &[char]) -> Vec<char> {
 	let xor_res = bin_util::bin_xor(&v1, &v2);
 	bin_util::bin_xor(&xor_res, &v3)
 }
+
+fn shift(curr_row: &[char], positions_to_shift: usize) -> Vec<char> {
+	let mut output = curr_row.to_vec();
+	output.rotate_right(positions_to_shift);
+	for i in 0..positions_to_shift {
+		output[i] = '0';
+	}
+	output
+}
+
 
 ///////////////////////////////////////////////////////////////
 // STEP 3
@@ -203,7 +204,7 @@ fn is_prime(num: i32) -> bool {
 }
 
 fn main() {
-	let input = "ttyuekjasdfasdf".to_string();
+	let input = "this is a test".to_string();
 	let input_bin = bin_util::str_to_bin(input.clone());
 	let mut message_block = init_message_block(input_bin);
 	fill_message_block(&mut message_block);
