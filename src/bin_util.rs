@@ -1,12 +1,3 @@
-pub fn dump_message_block(message_block: Vec<Vec<char>>) {
-	for row in message_block {
-		for c in row {
-			print!("{}", c);
-		}
-		println!();
-	}
-}
-
 pub fn str_to_bin(input: String) -> String {
 	let mut output = "".to_string();
 	for c in input.clone().into_bytes() {
@@ -16,20 +7,20 @@ pub fn str_to_bin(input: String) -> String {
 	output + "1"
 }
 
-pub fn bin_ROT(inp: Vec<char>, bits_to_rotate: usize) -> Vec<char> {
+pub fn bin_rot(inp: Vec<char>, bits_to_rotate: usize) -> Vec<char> {
 	let mut res = inp.to_vec();
 	res.rotate_right(bits_to_rotate);
 	res
 }
 
-pub fn bin_XOR(inp1: Vec<char>, inp2: Vec<char>) -> Vec<char> {
+pub fn bin_xor(inp1: Vec<char>, inp2: Vec<char>) -> Vec<char> {
 	inp1.iter()
 		.zip(inp2.iter())
 		.map(|(i_1, i_2)| ((i_1 != i_2) as i32).to_string().pop().unwrap())
 		.collect()
 }
 
-pub fn bin_AND(inp1: Vec<char>, inp2: Vec<char>) -> Vec<char> {
+pub fn bin_and(inp1: Vec<char>, inp2: Vec<char>) -> Vec<char> {
 	inp1.iter()
 		.zip(inp2.iter())
 		.map(|(i_1, i_2)| ((*i_1 == '1' && i_1 == i_2) as i32).to_string().pop().unwrap())
@@ -37,14 +28,7 @@ pub fn bin_AND(inp1: Vec<char>, inp2: Vec<char>) -> Vec<char> {
 }
 
 
-pub fn bin_ADD_D(inp1: Vec<char>, inp2: Vec<char>) -> i128 {
-	let inp1_int = bin_to_decimal(inp1);
-	let inp2_int = bin_to_decimal(inp2);
-
-	inp1_int + inp2_int
-}
-
-pub fn bin_ADD(inp1: Vec<char>, inp2: Vec<char>) -> Vec<char> {
+pub fn bin_add(inp1: Vec<char>, inp2: Vec<char>) -> Vec<char> {
 	let inp1_int = bin_to_decimal(inp1);
 	let inp2_int = bin_to_decimal(inp2);
 
@@ -56,7 +40,7 @@ pub fn bin_ADD(inp1: Vec<char>, inp2: Vec<char>) -> Vec<char> {
 	sum_bin.chars().collect()
 }
 
-pub fn bin_NOT(inp: Vec<char>) -> Vec<char> {
+pub fn bin_not(inp: Vec<char>) -> Vec<char> {
 	inp.into_iter()
 		.map(|i| (!(i.to_string().parse::<i32>().unwrap() == 1) as i32).to_string().pop().unwrap())
 		.collect()

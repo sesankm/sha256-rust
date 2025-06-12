@@ -1,8 +1,7 @@
 mod k_constants;
 mod bin_util;
 
-// initializing message_block
-fn step_one(input_bin: String) -> Vec<Vec<char>> {
+fn init_message_block(input_bin: String) -> Vec<Vec<char>> {
 	let mut message_block = vec!['0'; 512];
 
 	let input_len = format!("{:b}", input_bin.len() - 1);
@@ -28,8 +27,7 @@ fn shift(curr_row: Vec<char>, positions_to_shift: usize) -> Vec<char> {
 	output
 }
 
-// populate message_block words - w16..w64
-fn step_two(message_block: &mut Vec<Vec<char>>) {
+fn fill_message_block(message_block: &mut Vec<Vec<char>>) {
 	for i in 16..64 {
 		let result = calc_next_word(i, message_block.to_vec());
 		message_block.push(result);
@@ -39,74 +37,33 @@ fn step_two(message_block: &mut Vec<Vec<char>>) {
 fn calc_next_word(curr_row: usize, message_block: Vec<Vec<char>>) -> Vec<char> {
 	let x = message_block[curr_row - 16].clone();
 	let y = message_block[curr_row - 7].clone();
-	let sig_zero = sig_zero(message_block[curr_row - 15].clone());
-	let sig_one = sig_one(message_block[curr_row - 2].clone());
+	let sig_zero = calc_sig_zero(message_block[curr_row - 15].clone());
+	let sig_one = calc_sig_one(message_block[curr_row - 2].clone());
 
-	let x_str: String = x.into_iter().collect();
-	let y_str: String = y.into_iter().collect();
-	let sig_zero_str: String = sig_zero.into_iter().collect();
-	let sig_one_str: String = sig_one.into_iter().collect();
-
-	let x_int = i128::from_str_radix(&x_str, 2).unwrap();
-	let y_int = i128::from_str_radix(&y_str, 2).unwrap();
-	let sig_zero_int = i128::from_str_radix(&sig_zero_str, 2).unwrap();
-	let sig_one_int = i128::from_str_radix(&sig_one_str, 2).unwrap();
-
-	let result_dec = x_int + y_int + sig_zero_int + sig_one_int;
-	let mut result_bin_str = format!("{:b}", result_dec);
-
-	result_bin_str = format!("{:0>32}", result_bin_str);
-	let mut result_bin_vec: Vec<char> = result_bin_str.chars().collect();
-
-	while result_bin_vec.len() > 32 {
-		result_bin_vec.remove(0);
-	}
-
-	result_bin_vec
+	let mut s1 = bin_util::bin_add(x, y);
+	s1 = bin_util::bin_add(s1, sig_zero);
+	bin_util::bin_add(s1, sig_one)
 }
 
-fn sig_zero(curr_row: Vec<char>) -> Vec<char> {
-	let mut v1 = curr_row.to_vec();
-	v1.rotate_right(7);
-	v1.clone().into_iter().map(|x| x as u32 - '0' as u32);
-
-	let mut v2 = curr_row.to_vec();
-	v2.rotate_right(18);
-	v2.clone().into_iter().map(|x| x as u32 - '0' as u32);
-
+fn calc_sig_zero(curr_row: Vec<char>) -> Vec<char> {
+	let v1 = bin_util::bin_rot(curr_row.clone(), 7);
+	let v2 = bin_util::bin_rot(curr_row.clone(), 18);
 	let v3 = shift(curr_row, 3);
-	let mut result = Vec::new();
 
-	for (ind, val) in v1.iter().enumerate() {
-		let r1 = ((*val != v2[ind]) as i32).to_string().pop().unwrap();
-		let r2 = ((r1 != v3[ind]) as i32).to_string().pop().unwrap();
-		result.push(r2);
-	}
-	result
+	let xor_res = bin_util::bin_xor(v1, v2);
+	bin_util::bin_xor(xor_res, v3)
 }
 
-fn sig_one(curr_row: Vec<char>) -> Vec<char> {
-	let mut v1 = curr_row.to_vec();
-	v1.rotate_right(17);
-	v1.clone().into_iter().map(|x| x as u32 - '0' as u32);
-
-	let mut v2 = curr_row.to_vec();
-	v2.rotate_right(19);
-	v2.clone().into_iter().map(|x| x as u32 - '0' as u32);
-
+fn calc_sig_one(curr_row: Vec<char>) -> Vec<char> {
+	let v1 = bin_util::bin_rot(curr_row.clone(), 17);
+	let v2 = bin_util::bin_rot(curr_row.clone(), 19);
 	let v3 = shift(curr_row, 10);
-	let mut result = Vec::new();
 
-	for (ind, val) in v1.iter().enumerate() {
-		let r1 = ((*val != v2[ind]) as i32).to_string().pop().unwrap();
-		let r2 = ((r1 != v3[ind]) as i32).to_string().pop().unwrap();
-		result.push(r2);
-	}
-	result
+	let xor_res = bin_util::bin_xor(v1, v2);
+	bin_util::bin_xor(xor_res, v3)
 }
 
-// calculate hashes for h0-h7 and final hash_value
-fn step_three(message_block: Vec<Vec<char>>) {
+fn calc_final_hash(message_block: Vec<Vec<char>>) {
 	let initial_hashes: Vec<Vec<char>> = calculate_initial_hashes();
 	let mut a = initial_hashes[0].clone();
 	let mut b = initial_hashes[1].clone();
@@ -123,33 +80,33 @@ fn step_three(message_block: Vec<Vec<char>>) {
 		let choice = calc_choice(e.clone(), f.clone(), g.clone());
 		let k_vec = k_constants::K_CONSTANTS[curr_ind].chars().collect();
 
-		let mut s1 = bin_util::bin_ADD(h, sum_one);
-		s1 = bin_util::bin_ADD(s1.clone(), choice);
-		s1 = bin_util::bin_ADD(s1.clone(), k_vec);
-		let temp_one = bin_util::bin_ADD(s1.clone(), curr_row);
+		let mut s1 = bin_util::bin_add(h, sum_one);
+		s1 = bin_util::bin_add(s1.clone(), choice);
+		s1 = bin_util::bin_add(s1.clone(), k_vec);
+		let temp_one = bin_util::bin_add(s1.clone(), curr_row);
 
 		let sum_zero = calc_sum_zero(a.clone());
 		let majority = calc_majority(a.clone(), b.clone(), c.clone());
-		let temp_two = bin_util::bin_ADD(sum_zero, majority);
+		let temp_two = bin_util::bin_add(sum_zero, majority);
 
 		h = g;
 		g = f;
 		f = e;
-		e = bin_util::bin_ADD(d, temp_one.clone());
+		e = bin_util::bin_add(d, temp_one.clone());
 		d = c;
 		c = b;
 		b = a;
-		a = bin_util::bin_ADD(temp_one, temp_two);
+		a = bin_util::bin_add(temp_one, temp_two);
 	}
 
-	let result_word_one   = bin_util::bin_ADD(a, initial_hashes[0].clone());
-	let result_word_two   = bin_util::bin_ADD(b, initial_hashes[1].clone());
-	let result_word_three = bin_util::bin_ADD(c, initial_hashes[2].clone());
-	let result_word_four  = bin_util::bin_ADD(d, initial_hashes[3].clone());
-	let result_word_five  = bin_util::bin_ADD(e, initial_hashes[4].clone());
-	let result_word_six   = bin_util::bin_ADD(f, initial_hashes[5].clone());
-	let result_word_seven = bin_util::bin_ADD(g, initial_hashes[6].clone());
-	let result_word_eight = bin_util::bin_ADD(h, initial_hashes[7].clone());
+	let result_word_one   = bin_util::bin_add(a, initial_hashes[0].clone());
+	let result_word_two   = bin_util::bin_add(b, initial_hashes[1].clone());
+	let result_word_three = bin_util::bin_add(c, initial_hashes[2].clone());
+	let result_word_four  = bin_util::bin_add(d, initial_hashes[3].clone());
+	let result_word_five  = bin_util::bin_add(e, initial_hashes[4].clone());
+	let result_word_six   = bin_util::bin_add(f, initial_hashes[5].clone());
+	let result_word_seven = bin_util::bin_add(g, initial_hashes[6].clone());
+	let result_word_eight = bin_util::bin_add(h, initial_hashes[7].clone());
 
 	let seg_1 = to_hex(result_word_one.iter().collect::<String>(), 4);
 	let seg_2 = to_hex(result_word_two.iter().collect::<String>(), 4);
@@ -159,6 +116,8 @@ fn step_three(message_block: Vec<Vec<char>>) {
 	let seg_6 = to_hex(result_word_six.iter().collect::<String>(), 4);
 	let seg_7 = to_hex(result_word_seven.iter().collect::<String>(), 4);
 	let seg_8 = to_hex(result_word_eight.iter().collect::<String>(), 4);
+
+	print!("{}{}{}{}{}{}{}{}", seg_1, seg_2, seg_3, seg_4, seg_5, seg_6, seg_7, seg_8);
 }
 
 fn to_hex(val: String, len: usize) -> String {
@@ -167,35 +126,35 @@ fn to_hex(val: String, len: usize) -> String {
 }
 
 fn calc_choice(e: Vec<char>, f: Vec<char>, g: Vec<char>) -> Vec<char> {
- 	let not_e = bin_util::bin_NOT(e.to_vec());
- 	let e_and_f = bin_util::bin_AND(e.to_vec(), f);
- 	let not_e_and_g = bin_util::bin_AND(not_e, g);
- 	bin_util::bin_XOR(e_and_f, not_e_and_g)
+ 	let not_e = bin_util::bin_not(e.to_vec());
+ 	let e_and_f = bin_util::bin_and(e.to_vec(), f);
+ 	let not_e_and_g = bin_util::bin_and(not_e, g);
+ 	bin_util::bin_xor(e_and_f, not_e_and_g)
 }
 
 fn calc_sum_one(input: Vec<char>) -> Vec<char> {
-	let x = bin_util::bin_ROT(input.clone(), 6);
-	let y = bin_util::bin_ROT(input.clone(), 11);
-	let z = bin_util::bin_ROT(input.clone(), 25);
-	let mut result = bin_util::bin_XOR(x, y);
-	bin_util::bin_XOR(result, z)
+	let x = bin_util::bin_rot(input.clone(), 6);
+	let y = bin_util::bin_rot(input.clone(), 11);
+	let z = bin_util::bin_rot(input.clone(), 25);
+	let result = bin_util::bin_xor(x, y);
+	bin_util::bin_xor(result, z)
 }
 
 
 fn calc_sum_zero(input: Vec<char>) -> Vec<char> {
-	let x = bin_util::bin_ROT(input.clone(), 2);
-	let y = bin_util::bin_ROT(input.clone(), 13);
-	let z = bin_util::bin_ROT(input.clone(), 22);
-	let mut result = bin_util::bin_XOR(x, y);
-	bin_util::bin_XOR(result, z)
+	let x = bin_util::bin_rot(input.clone(), 2);
+	let y = bin_util::bin_rot(input.clone(), 13);
+	let z = bin_util::bin_rot(input.clone(), 22);
+	let result = bin_util::bin_xor(x, y);
+	bin_util::bin_xor(result, z)
 }
 
 fn calc_majority(a: Vec<char>, b: Vec<char>, c: Vec<char>) -> Vec<char> {
-	let x = bin_util::bin_AND(a.clone(), b.clone());
-	let y = bin_util::bin_AND(a.clone(), c.clone());
-	let z = bin_util::bin_AND(b.clone(), c.clone());
-	let mut result = bin_util::bin_XOR(x, y);
-	bin_util::bin_XOR(result, z)
+	let x = bin_util::bin_and(a.clone(), b.clone());
+	let y = bin_util::bin_and(a.clone(), c.clone());
+	let z = bin_util::bin_and(b.clone(), c.clone());
+	let result = bin_util::bin_xor(x, y);
+	bin_util::bin_xor(result, z)
 }
 
 fn calculate_initial_hashes() -> Vec<Vec<char>> {
@@ -240,9 +199,8 @@ fn is_prime(num: i32) -> bool {
 fn main() {
 	let input = "abc123".to_string();
 	let input_bin = bin_util::str_to_bin(input.clone());
-	let mut message_block = step_one(input_bin);
-	step_two(&mut message_block);
+	let mut message_block = init_message_block(input_bin);
+	fill_message_block(&mut message_block);
 	calculate_initial_hashes();
-	step_three(message_block);
-	//dump_message_block(message_block);
+	calc_final_hash(message_block);
 }
