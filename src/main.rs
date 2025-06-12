@@ -30,12 +30,12 @@ fn fill_message_block(message_block: &mut Vec<Vec<char>>) {
 }
 
 fn calc_next_word(curr_row: usize, message_block: Vec<Vec<char>>) -> Vec<char> {
-	let x = message_block[curr_row - 16].clone();
-	let y = message_block[curr_row - 7].clone();
+	let x = &message_block[curr_row - 16];
+	let y = &message_block[curr_row - 7];
 	let sig_zero = calc_sig_zero(&message_block[curr_row - 15]);
 	let sig_one = calc_sig_one(&message_block[curr_row - 2]);
 
-	let mut s1 = bin_util::bin_add(&x, &y);
+	let mut s1 = bin_util::bin_add(x, y);
 	s1 = bin_util::bin_add(&s1, &sig_zero);
 	bin_util::bin_add(&s1, &sig_one)
 }
@@ -82,7 +82,7 @@ fn calc_final_hash(message_block: Vec<Vec<char>>) -> String {
 	let mut h = initial_hashes[7].clone();
 
 	for curr_ind in 0..64 {
-		let curr_row = message_block[curr_ind].clone();
+		let curr_row = &message_block[curr_ind];
 		let sum_one = calc_sum_one(&e);
 		let choice = calc_choice(&e, &f, &g);
 		let k_vec = k_constants::K_CONSTANTS[curr_ind].chars().collect::<Vec<char>>();
@@ -90,7 +90,7 @@ fn calc_final_hash(message_block: Vec<Vec<char>>) -> String {
 		let mut s1 = bin_util::bin_add(&h, &sum_one);
 		s1 = bin_util::bin_add(&s1, &choice);
 		s1 = bin_util::bin_add(&s1, &k_vec);
-		let temp_one = bin_util::bin_add(&s1.clone(), &curr_row);
+		let temp_one = bin_util::bin_add(&s1, curr_row);
 
 		let sum_zero = calc_sum_zero(&a);
 		let majority = calc_majority(&a, &b, &c);
@@ -99,7 +99,7 @@ fn calc_final_hash(message_block: Vec<Vec<char>>) -> String {
 		h = g;
 		g = f;
 		f = e;
-		e = bin_util::bin_add(&d, &temp_one.clone());
+		e = bin_util::bin_add(&d, &temp_one);
 		d = c;
 		c = b;
 		b = a;
@@ -204,10 +204,10 @@ fn is_prime(num: i32) -> bool {
 }
 
 fn main() {
-	let input = "this is a test".to_string();
+	let input = "abc123".to_string();
 	let input_bin = bin_util::str_to_bin(input.clone());
 	let mut message_block = init_message_block(input_bin);
 	fill_message_block(&mut message_block);
 	let hash = calc_final_hash(message_block);
-	println!("{}", hash);
+	println!("{hash}");
 }
