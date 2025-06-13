@@ -1,3 +1,4 @@
+use std::env;
 mod k_constants;
 mod bin_util;
 
@@ -204,10 +205,18 @@ fn is_prime(num: i32) -> bool {
 }
 
 fn main() {
-	let input = "abc123".to_string();
+	let args: Vec<String> = env::args().collect();
+	if args.len() < 2 as usize {
+		panic!("ERROR: Expected an argument with length > 0 in quotes.\nExample: `cargo run \"this is an example\"`");
+	}
+
+	let input = &args[1];
+	println!("Hashing \"{input}\"");
 	let input_bin = bin_util::str_to_bin(input.clone());
+
 	let mut message_block = init_message_block(input_bin);
 	fill_message_block(&mut message_block);
+
 	let hash = calc_final_hash(message_block);
 	println!("{hash}");
 }
