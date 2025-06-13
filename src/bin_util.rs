@@ -1,8 +1,8 @@
 pub fn str_to_bin(input: String) -> String {
 	let mut output = "".to_string();
-	for c in input.clone().into_bytes() {
-		let input = format!("0{:b}", c);
-		output += &format!("{:0>8}", input);
+	for c in input.into_bytes() {
+		let c_as_bin = format!("0{:b}", c);
+		output += &format!("{:0>8}", c_as_bin);
 	}
 	output + "1"
 }
